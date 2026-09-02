@@ -3,24 +3,26 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { Card } from "../components/ui/Card";
+import { API_BASE_URL } from "../config";
 
 export default function CalendarView() {
   const [reminders, setReminders] = useState([]);
 
   useEffect(() => {
     const fetchReminders = async () => {
-      const token = localStorage.getItem("safebill_token");
-      if (!token) return;
       try {
-        const res = await fetch("http://localhost:5000/api/reminders", {
-          headers: { "Authorization": `Bearer ${token}` }
+        const token = localStorage.getItem("safebill_token");
+        const res = await fetch(`${API_BASE_URL}/reminders`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
         });
         if (res.ok) {
           const data = await res.json();
           setReminders(data);
         }
-      } catch (e) {
-        console.error("Failed to fetch reminders for calendar:", e);
+      } catch (err) {
+        console.error("Failed to fetch reminders:", err);
       }
     };
     fetchReminders();

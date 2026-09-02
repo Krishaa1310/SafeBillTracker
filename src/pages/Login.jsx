@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Shield, Mail, Lock, ArrowRight } from "lucide-react";
+import { Shield, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Card } from "../components/ui/Card";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -21,10 +23,13 @@ export default function Login() {
     }
 
     try {
+      setLoading(true);
       await login(email, password);
       navigate("/");
     } catch (err) {
       setError(err.message || "Failed to login. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,6 +76,7 @@ export default function Login() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
                   required
                 />
               </div>
@@ -81,9 +87,9 @@ export default function Login() {
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="password">
                   Password
                 </label>
-                <a href="#" className="text-xs font-medium text-primary hover:underline hover:text-primary/80 transition-colors">
+                <Link to="/forgot-password" className="text-xs font-medium text-primary hover:underline hover:text-primary/80 transition-colors">
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
@@ -91,22 +97,32 @@ export default function Login() {
                 </div>
                 <input
                   id="password"
-                  type="password"
-                  className="flex h-12 w-full rounded-xl border border-input bg-background/50 px-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all shadow-sm"
+                  type={showPassword ? "text" : "password"}
+                  className="flex h-12 w-full rounded-xl border border-input bg-background/50 pl-10 pr-12 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all shadow-sm"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
 
             <button
               type="submit"
+              disabled={loading}
               className="group inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 h-12 w-full mt-2"
             >
-              Sign In
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              {loading ? "Signing In..." : "Sign In"}
+              {!loading && <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
 

@@ -2,40 +2,41 @@ import React, { useState, useEffect } from "react";
 import { Plus, Filter } from "lucide-react";
 import { ReminderCard } from "../components/Reminders/ReminderCard";
 import { AddReminderModal } from "../components/Reminders/AddReminderModal";
+import { API_BASE_URL } from "../config";
 
 export default function Reminders() {
   const [reminders, setReminders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filter, setFilter] = useState("All");
 
   const categories = ["All", "Credit Card", "EMI", "Subscription", "Insurance"];
 
-  const API_BASE_URL = "http://localhost:5000/api/reminders";
-
-  const fetchReminders = async () => {
-    const token = localStorage.getItem("safebill_token");
-    if (!token) return;
-    try {
-      const res = await fetch(API_BASE_URL, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (res.ok) {
+  useEffect(() => {
+    const fetchReminders = async () => {
+      try {
+        const token = localStorage.getItem("safebill_token");
+        const res = await fetch(`${API_BASE_URL}/reminders`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (!res.ok) throw new Error("Failed to fetch reminders");
         const data = await res.json();
         setReminders(data);
+      } catch (err) {
+        console.error("Failed to load reminders:", err);
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.error("Failed to fetch reminders:", e);
-    }
-  };
-
-  useEffect(() => {
+    };
     fetchReminders();
   }, []);
 
   const handleAddReminder = async (newReminder) => {
-    const token = localStorage.getItem("safebill_token");
     try {
-      const res = await fetch(API_BASE_URL, {
+      const token = localStorage.getItem("safebill_token");
+      const res = await fetch(`${API_BASE_URL}/reminders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -43,29 +44,35 @@ export default function Reminders() {
         },
         body: JSON.stringify(newReminder)
       });
-      if (res.ok) fetchReminders();
-    } catch (e) {
-      console.error("Failed to add reminder:", e);
+      if (!res.ok) throw new Error("Failed to create reminder");
+      setReminders(prev => [...prev, newReminder]);
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to add reminder");
     }
   };
 
   const handleDelete = async (id) => {
-    const token = localStorage.getItem("safebill_token");
     try {
-      const res = await fetch(`${API_BASE_URL}/${id}`, {
+      const token = localStorage.getItem("safebill_token");
+      const res = await fetch(`${API_BASE_URL}/reminders/${id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${token}` }
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
       });
-      if (res.ok) fetchReminders();
-    } catch (e) {
-      console.error("Failed to delete reminder:", e);
+      if (!res.ok) throw new Error("Failed to delete reminder");
+      setReminders(prev => prev.filter(r => r.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to delete reminder");
     }
   };
 
   const handleComplete = async (id) => {
-    const token = localStorage.getItem("safebill_token");
     try {
-      const res = await fetch(`${API_BASE_URL}/${id}`, {
+      const token = localStorage.getItem("safebill_token");
+      const res = await fetch(`${API_BASE_URL}/reminders/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -73,9 +80,11 @@ export default function Reminders() {
         },
         body: JSON.stringify({ status: "completed" })
       });
-      if (res.ok) fetchReminders();
-    } catch (e) {
-      console.error("Failed to update reminder status:", e);
+      if (!res.ok) throw new Error("Failed to update status");
+      setReminders(prev => prev.map(r => r.id === id ? { ...r, status: "completed" } : r));
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to complete reminder");
     }
   };
 
@@ -128,7 +137,11 @@ export default function Reminders() {
       </div>
 
       <div className="space-y-4 mt-6">
-        {filteredReminders.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-20 bg-card/30 rounded-xl border border-border/50">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : filteredReminders.length === 0 ? (
           <div className="text-center py-20 border-2 border-dashed border-border rounded-xl bg-card/50">
             <div className="mx-auto w-12 h-12 bg-secondary rounded-full flex items-center justify-center mb-4">
               <Plus className="h-6 w-6 text-muted-foreground" />

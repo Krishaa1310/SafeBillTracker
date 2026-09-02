@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Shield, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Shield, Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Card } from "../components/ui/Card";
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -27,10 +29,13 @@ export default function Register() {
     }
 
     try {
+      setLoading(true);
       await register(name, email, password);
       navigate("/");
     } catch (err) {
       setError(err.message || "Failed to create account. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,6 +82,7 @@ export default function Register() {
                   placeholder="John Doe"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  disabled={loading}
                   required
                 />
               </div>
@@ -97,6 +103,7 @@ export default function Register() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
                   required
                 />
               </div>
@@ -112,23 +119,33 @@ export default function Register() {
                 </div>
                 <input
                   id="password"
-                  type="password"
-                  className="flex h-12 w-full rounded-xl border border-input bg-background/50 px-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-all shadow-sm"
+                  type={showPassword ? "text" : "password"}
+                  className="flex h-12 w-full rounded-xl border border-input bg-background/50 pl-10 pr-12 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-all shadow-sm"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
                   required
                   minLength={6}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-accent transition-colors focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
 
             <button
               type="submit"
+              disabled={loading}
               className="group inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-accent text-accent-foreground hover:bg-accent/90 hover:shadow-lg hover:shadow-accent/20 h-12 w-full mt-4"
             >
-              Create Account
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              {loading ? "Creating Account..." : "Create Account"}
+              {!loading && <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
 

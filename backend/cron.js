@@ -15,20 +15,33 @@ const db = new sqlite3.Database(dbPath, (err) => {
 let transporter;
 
 async function setupTransporter() {
-  try {
-    const testAccount = await nodemailer.createTestAccount();
+  if (process.env.SMTP_HOST) {
     transporter = nodemailer.createTransport({
-      host: testAccount.smtp.host,
-      port: testAccount.smtp.port,
-      secure: testAccount.smtp.secure,
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || "587"),
+      secure: process.env.SMTP_SECURE === "true",
       auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
-    console.log("Nodemailer transporter ready. Using Ethereal E-mail.");
-  } catch (error) {
-    console.error("Error creating ethereal account", error);
+    console.log("Nodemailer transporter ready. Using configured SMTP.");
+  } else {
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      transporter = nodemailer.createTransport({
+        host: testAccount.smtp.host,
+        port: testAccount.smtp.port,
+        secure: testAccount.smtp.secure,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+      console.log("Nodemailer transporter ready. Using Ethereal E-mail.");
+    } catch (error) {
+      console.error("Error creating ethereal account", error);
+    }
   }
 }
 

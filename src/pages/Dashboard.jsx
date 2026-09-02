@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card"
 import { DashboardCharts } from "../components/Dashboard/DashboardCharts";
 import { isBefore, isToday, addDays, parseISO } from "date-fns";
 
+import { API_BASE_URL } from "../config";
+
 const CATEGORY_ICONS = {
   "Credit Card": CreditCard,
   "EMI": Home,
@@ -27,18 +29,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchReminders = async () => {
-      const token = localStorage.getItem("safebill_token");
-      if (!token) return;
       try {
-        const res = await fetch("http://localhost:5000/api/reminders", {
-          headers: { "Authorization": `Bearer ${token}` }
+        const token = localStorage.getItem("safebill_token");
+        const res = await fetch(`${API_BASE_URL}/reminders`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
         });
         if (res.ok) {
           const data = await res.json();
           setReminders(data);
         }
-      } catch (e) {
-        console.error("Failed to fetch reminders:", e);
+      } catch (err) {
+        console.error("Failed to fetch reminders:", err);
       }
     };
     fetchReminders();
